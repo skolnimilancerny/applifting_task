@@ -1,0 +1,8 @@
+pyvenv.cfg
+bin
+include
+lib
+.pytest_cache
+.idea
+data.db
+heroku.yml
