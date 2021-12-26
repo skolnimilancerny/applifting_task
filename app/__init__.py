@@ -7,6 +7,7 @@ app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///../data.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = os.urandom(20)
 db = SQLAlchemy(app)
 URL = os.environ['OFFERS_URL']
 ACCESS_TOKEN = os.environ['ACCESS_TOKEN']

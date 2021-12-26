@@ -1,10 +1,14 @@
-from flask import request, jsonify
-from app.models import Products, Offers, Keys
+import uuid
+from functools import wraps
+from flask import request, jsonify, make_response
+from werkzeug.security import generate_password_hash, check_password_hash
+from app.models import Products, Offers, Users
 from app import app, db, URL, headers
+import datetime
 import time
 import threading
 import requests
-import secrets
+import jwt
 
 
 # EVERY 60s UPDATES OFFERS FROM OFFERS MS
@@ -35,39 +39,77 @@ def start_job():
     thread.start()
 
 
-# CHECK IF PROVIDED API KEY IS IN DATABASE
-@app.before_request
-def check_api_key():
-    all_keys = [value.api_key for value in Keys.query.all()]
-    api_key = request.headers.get('api_key')
-    if api_key in all_keys or request.path == '/register':
-        pass
-    else:
-        return jsonify(success=False, error="Unauthorized"), 401
+# WRAPPER CHECKS FOR VALID JWT
+def token_required(f):
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        token = None
+        if 'x-access-tokens' in request.headers:
+            token = request.headers['x-access-tokens']
+        if not token:
+            return jsonify(success=False, error='No token provided'), 401
+        try:
+            jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+        except:
+            return jsonify(success=False, error='Invalid token'), 401
+        return f(*args, **kwargs)
+    return wrapped
 
 
-# GET AN API KEY
-@app.route('/register')
+# CREATE A NEW USER
+@app.route('/register', methods=['POST'])
 def register():
-    api_key = secrets.token_urlsafe(16)
-    db.session.add(Keys(api_key=api_key))
+    username = request.args.get('username')
+    hashed_password = generate_password_hash(request.args.get('password'), method='sha256')
+    new_user = Users(public_id=str(uuid.uuid4()), username=username, password=hashed_password)
+    db.session.add(new_user)
     db.session.commit()
-    return jsonify(success=True, api_key=api_key)
+    return jsonify(success=True, message=f'Welcome {username}! Your account has been created.'), 201
 
 
-# DELETE EXISTING API KEY
-@app.route('/delete_key', methods=['DELETE'])
+# DELETE EXISTING USER
+@app.route('/users/delete', methods=['DELETE'])
+@token_required
 def delete_key():
-    api_key = request.headers.get('api_key')
-    key_in_db = Keys.query.filter(Keys.api_key == api_key).first()
-    if key_in_db and api_key:
-        db.session.delete(key_in_db)
+    public_id = request.args.get('id')
+    user_to_delete = Users.query.filter(Users.public_id == public_id).first()
+    if user_to_delete and public_id:
+        db.session.delete(user_to_delete)
         db.session.commit()
-        return jsonify(success=True, message='Key has been deleted'), 200
+        return jsonify(success=True, message=f'User {user_to_delete.username} has been deleted.'), 200
+    return jsonify(success=False, message='No user with that ID.'), 200
+
+
+@app.route('/users/all')
+@token_required
+def get_all_users():
+    all_users = Users.query.all()
+    users = [user.to_dict() for user in all_users]
+    if users:
+        return jsonify(success=True, all_users=users), 200
+    else:
+        return jsonify(success=True, message="No users to show."), 200
+
+
+@app.route('/login')
+def login():
+    auth = request.authorization
+    if not auth or not auth.username or not auth.password:
+        return make_response('Verification failed', 401, {'WWW-Authenticate': 'Basic realm="Login required"'})
+
+    user = Users.query.filter(Users.username == auth.username).first()
+    if check_password_hash(user.password, auth.get('password')):
+        token = jwt.encode(
+            {'public_id': user.public_id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)},
+            app.config['SECRET_KEY'], "HS256")
+        return jsonify({'token': token}), 200
+
+    return make_response('Verification failed', 401, {'WWW-Authenticate': 'Basic realm="Login required"'})
 
 
 #  CREATE A NEW PRODUCT
 @app.route('/products/create', methods=['POST'])
+@token_required
 def create_product():
     """
     Checks fot all required args and optional id. Then creates a new product with these args.
@@ -101,6 +143,7 @@ def create_product():
 
 # READ ALL PRODUCTS
 @app.route('/products/all')
+@token_required
 def get_all_products():
     all_products = Products.query.all()
     products = [product.to_dict() for product in all_products]
@@ -112,6 +155,7 @@ def get_all_products():
 
 # READ PRODUCT BY ID
 @app.route('/products/get')
+@token_required
 def get_product():
     product_id = request.args.get('id')
     product = Products.query.get(product_id)
@@ -125,6 +169,7 @@ def get_product():
 
 # SEARCH FOR PRODUCT BY NAME
 @app.route('/products/search')
+@token_required
 def search_product():
     name = request.args.get('name')
     products_found = Products.query.filter(Products.name == name).all()
@@ -139,6 +184,7 @@ def search_product():
 
 # UPDATE A PRODUCT NAME AND DESCRIPTION
 @app.route('/products/update', methods=['PUT'])
+@token_required
 def update_product():
     product_id = request.args.get('id')
     name = request.args.get('name')
@@ -158,6 +204,7 @@ def update_product():
 
 # DELETE A PRODUCT AND ITS OFFERS
 @app.route('/products/delete', methods=['DELETE'])
+@token_required
 def delete_product():
     product_id = request.args.get('id')
     product_to_delete = Products.query.get(product_id)
@@ -174,6 +221,7 @@ def delete_product():
 
 # VIEW ALL PRODUCT OFFERS FROM OFFERS MS
 @app.route('/products/offers')
+@token_required
 def get_offers():
     product_id = request.args.get('id')
     product = Products.query.get(product_id)

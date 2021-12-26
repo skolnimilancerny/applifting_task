@@ -1,7 +1,9 @@
 import requests
 import random
+from requests.auth import HTTPBasicAuth
 
-ENDPOINT = 'https://apiapplifting.herokuapp.com'
+# ENDPOINT = 'https://apiapplifting.herokuapp.com'
+ENDPOINT = 'http://10.0.0.18:5000'
 
 ID = random.randint(100000, 1000000)
 
@@ -11,14 +13,24 @@ PARAMS = {
         'description': 'TESTING DESC'
     }
 
-headers = {
-    'api_key': requests.get(f'{ENDPOINT}/register').json()['api_key']
-}
+
+def test_register():
+    data = {
+        'username': 'username',
+        'password': 'password',
+        'public_id': '1'
+    }
+    response = requests.post(f'{ENDPOINT}/register', params=data)
+    assert response.status_code == 201
 
 
 def test_create_product():
     response = requests.post(f'{ENDPOINT}/products/create')
     assert response.status_code == 401
+
+    headers = {
+        'x-access-tokens': requests.get(f'{ENDPOINT}/login', auth=HTTPBasicAuth('username', 'password')).json()['token']
+    }
 
     response = requests.post(f'{ENDPOINT}/products/create', headers=headers)
     expected_json = {'error': 'Please provide all arguments.', 'success': False}
@@ -35,11 +47,19 @@ def test_get_all_products():
     response = requests.get(f'{ENDPOINT}/products/all')
     assert response.status_code == 401
 
+    headers = {
+        'x-access-tokens': requests.get(f'{ENDPOINT}/login', auth=HTTPBasicAuth('username', 'password')).json()['token']
+    }
+
     response = requests.get(f'{ENDPOINT}/products/all', headers=headers)
     assert response.status_code == 200
 
 
 def test_get_product():
+    headers = {
+        'x-access-tokens': requests.get(f'{ENDPOINT}/login', auth=HTTPBasicAuth('username', 'password')).json()['token']
+    }
+
     response = requests.get(f'{ENDPOINT}/products/get', headers=headers)
     expected_json = {'error': 'Please provide a Product ID.', 'success': False}
     assert response.status_code == 400
@@ -62,6 +82,10 @@ def test_get_product():
 
 
 def test_search_product():
+    headers = {
+        'x-access-tokens': requests.get(f'{ENDPOINT}/login', auth=HTTPBasicAuth('username', 'password')).json()['token']
+    }
+
     response = requests.get(f'{ENDPOINT}/products/search', headers=headers)
     expected_json = {'error': 'Please provide a name to search.', 'success': False}
     assert response.status_code == 400
@@ -82,6 +106,10 @@ def test_search_product():
 
 
 def test_get_offers():
+    headers = {
+        'x-access-tokens': requests.get(f'{ENDPOINT}/login', auth=HTTPBasicAuth('username', 'password')).json()['token']
+    }
+
     response = requests.get(f'{ENDPOINT}/products/offers', headers=headers)
     expected_json = {'error': 'Please provide a Product ID.', 'success': False}
     assert response.status_code == 400
@@ -95,6 +123,10 @@ def test_get_offers():
 
 
 def test_update_product():
+    headers = {
+        'x-access-tokens': requests.get(f'{ENDPOINT}/login', auth=HTTPBasicAuth('username', 'password')).json()['token']
+    }
+
     response = requests.put(f'{ENDPOINT}/products/update', headers=headers)
     expected_json = {'error': 'Please provide all arguments.', 'success': False}
     assert response.status_code == 400
@@ -115,6 +147,10 @@ def test_update_product():
 
 
 def test_delete_product():
+    headers = {
+        'x-access-tokens': requests.get(f'{ENDPOINT}/login', auth=HTTPBasicAuth('username', 'password')).json()['token']
+    }
+
     response = requests.delete(f'{ENDPOINT}/products/delete', headers=headers)
     expected_json = {'error': 'Please provide a Product ID.', 'success': False}
     assert response.status_code == 400
@@ -129,15 +165,13 @@ def test_delete_product():
     assert expected_json == response.json()
 
 
-def test_delete_key():
-    response = requests.delete(f'{ENDPOINT}/delete_key')
-    assert response.status_code == 401
-
-    bad_headers = {
-        'api_key': 'wrongKey'
+def test_delete_user():
+    headers = {
+        'x-access-tokens': requests.get(f'{ENDPOINT}/login', auth=HTTPBasicAuth('username', 'password')).json()['token']
     }
-    response = requests.delete(f'{ENDPOINT}/delete_key', headers=bad_headers)
+
+    response = requests.delete(f'{ENDPOINT}/users/delete')
     assert response.status_code == 401
 
-    response = requests.delete(f'{ENDPOINT}/delete_key', headers=headers)
+    response = requests.delete(f'{ENDPOINT}/users/delete?id=1', headers=headers)
     assert response.status_code == 200

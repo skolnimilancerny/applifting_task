@@ -29,11 +29,18 @@ class Offers(db.Model):
         return products_dict
 
 
-# TABLE MODEL FOR API KEYS
-class Keys(db.Model):
-    __tablename__ = 'keys'
+# TABLE MODEL FOR USERS
+class Users(db.Model):
+    __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
-    api_key = db.Column(db.String)
+    public_id = db.Column(db.String(60), unique=True)
+    username = db.Column(db.String(80), unique=True)
+    password = db.Column(db.String(80))
+
+    def to_dict(self):
+        products_dict = {column.name: getattr(self, column.name) for column in self.__table__.columns
+                         if column.name != 'id'}
+        return products_dict
 
 
 db.create_all()
