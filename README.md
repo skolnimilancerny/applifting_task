@@ -6,7 +6,7 @@
 
 ### To start the api either:
 
-* visit https://appliftingapi.herokuapp.com/register and get your api_key
+* visit https://apiapplifting.herokuapp.com/register and get your api_key
 * build image from Dockerfile and run locally
 * install all dependencies and run from terminal or IDE
 
