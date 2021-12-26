@@ -9,6 +9,11 @@ import secrets
 
 # EVERY 60s UPDATES OFFERS FROM OFFERS MS
 def update_offers_db():
+    """
+    Checks for all product ids in database and then updates offers for each product from Offers MS.
+    After committing changes to database sleeps for 60s and runs again.
+    :return: None
+    """
     while True:
         product_ids = [row.id for row in Products.query.all()]
         for product_id in product_ids:
@@ -64,6 +69,11 @@ def delete_key():
 #  CREATE A NEW PRODUCT
 @app.route('/products/create', methods=['POST'])
 def create_product():
+    """
+    Checks fot all required args and optional id. Then creates a new product with these args.
+    This new product is then registered in Offers MS.
+    :return: None
+    """
     name = request.args.get('name')
     description = request.args.get('description')
     optional_id = request.args.get('id')
