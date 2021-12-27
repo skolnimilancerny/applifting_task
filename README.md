@@ -6,7 +6,7 @@
 
 ### To start the api either:
 
-* visit https://apiapplifting.herokuapp.com/register and get your api_key
+* visit https://appliftingflask.herokuapp.com/register and register, then visit /login to get your JWT token
 * build image from Dockerfile and run locally
 * install all dependencies and run from terminal or IDE
 
@@ -22,9 +22,28 @@ There is also a PORT environment variable, which is used by Heroku and defaults 
 
 Here is a list of all the routes with their functions and methods.
 
-### /register - GET
+### /register - POST
 
-Returns an api_key you need to INCLUDE IN HEADERS WITH ALL OTHER API CALLS.
+You need to register on this route to be able to login later.
+
+Arguments:
+* username (REQUIRED) - Your username.
+* password (REQUIRED) - Your password.
+
+### /login - GET
+
+If you succesfully login with HTTP Authenticate, it returns a token you need to INCLUDE IN HEADERS (x-access-tokens) WITH ALL OTHER API CALLS.
+
+### /users/all - GET
+
+Retuns all registered users.
+
+### /users/delete - DELETE
+
+Deletes a user by his public id.
+
+Arguments:
+* id (REQUIRED) - Your user public id.
 
 ### /products/create - POST
 
@@ -93,13 +112,3 @@ Feel free to change the tests file.
 ## Author
 
 Milan Černý
-
-
-
-
-
-
-
-
-
-
