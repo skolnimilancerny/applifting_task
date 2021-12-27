@@ -6,7 +6,7 @@
 
 ### To start the api either:
 
-* visit https://apiapplifting.herokuapp.com/register and register, then visit /login to get your JWT token
+* visit https://appliftingflask.herokuapp.com/register and register, then visit /login to get your JWT token
 * build image from Dockerfile and run locally
 * install all dependencies and run from terminal or IDE
 
