@@ -2,8 +2,7 @@ import requests
 import random
 from requests.auth import HTTPBasicAuth
 
-# ENDPOINT = 'https://apiapplifting.herokuapp.com'
-ENDPOINT = 'http://10.0.0.18:5000'
+ENDPOINT = 'https://appliftingflask.herokuapp.com'
 
 ID = random.randint(100000, 1000000)
 
