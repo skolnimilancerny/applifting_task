@@ -80,6 +80,7 @@ def delete_key():
     return jsonify(success=False, message='No user with that ID.'), 200
 
 
+# SHOW ALL USERS IN DB
 @app.route('/users/all')
 @token_required
 def get_all_users():
@@ -91,6 +92,7 @@ def get_all_users():
         return jsonify(success=True, message="No users to show."), 200
 
 
+# LOGIN WITH EXISTING CREDENTIALS
 @app.route('/login')
 def login():
     auth = request.authorization
