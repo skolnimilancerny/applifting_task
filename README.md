@@ -6,7 +6,7 @@
 
 ### To start the api either:
 
-* visit https://appliftingflask.herokuapp.com/register and register, then visit /login to get your JWT token
+* POST request to https://appliftingflask.herokuapp.com/register with username and password args to register, then visit /login to get your JWT token
 * build image from Dockerfile and run locally
 * install all dependencies and run from terminal or IDE
 
@@ -24,7 +24,7 @@ Here is a list of all the routes with their functions and methods.
 
 ### /register - POST
 
-You need to register on this route to be able to login later.
+You need to register on this route to be able to login.
 
 Arguments:
 * username (REQUIRED) - Your username.
